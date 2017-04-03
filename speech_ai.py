@@ -1,5 +1,5 @@
 import sys
-import bot
+import ChatAI
 
 
 def greeting():
@@ -13,12 +13,12 @@ def main():
     if len(sys.argv) == 2 and sys.argv[1] == '-speech':  
         greeting()
         print('Speech mode\n\n')
-        ai = bot.ChatAI_Speech()
+        ai = ChatAI.ChatAI_Speech()
 
     elif len(sys.argv) == 2 and sys.argv[1] == '-text':
         greeting()
         print('Text mode\n\n')
-        ai = bot.ChatAI_Text()
+        ai = ChatAI.ChatAI_Text()
 
     else:
         greeting()    
