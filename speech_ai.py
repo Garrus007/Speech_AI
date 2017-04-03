@@ -1,4 +1,7 @@
 import sys
+from abc import ABCMeta, abstractmethod
+import os
+import time
 
 # Библиотеки распознавания и синтеза речи
 import speech_recognition as sr
@@ -7,24 +10,19 @@ from gtts import gTTS
 # Воспроизведение речи
 import pyglet
 
-import os
-import time
-
 # Библиотека Chatterbot для простого лингвистического ИИ
 # https://github.com/gunthercox/ChatterBot
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 import logging
 
-class Speech_AI:
-    def __init__(self, speech = False):
-        self._speech = speech
+# Базовый класс
+class ChatAI:
 
-        if self._speech:
-            self._recognizer = sr.Recognizer()
-            self._microphone = sr.Microphone()
-            self._mp3_name = "speech.mp3"
+    __metaclass__=ABCMeta
 
+    def __init__(self):
+        
         self.bot = ChatBot(name="Robby",
             storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
             filters=["chatterbot.filters.RepetitiveResponseFilter"],
@@ -37,34 +35,11 @@ class Speech_AI:
 
     def work(self):
 
-        if self._speech:
-            print("Минутку тишины, пожалуйста...")
-            with self._microphone as source:
-                self._recognizer.adjust_for_ambient_noise(source)
+        self.pre_work()
 
         try:
-            while True:
-
-                if self._speech:
-                    audio = self.listenInput()
-
-                try:
-
-                    if self._speech:
-                        statement = self._recognizer.recognize_google(audio, language="ru_RU")
-                    else:
-                        statement = input()
-
-                    answer = self.chat(statement)
-
-                    if self._speech:
-                        self.say(str(answer))
-
-                except sr.UnknownValueError:
-                    print("Упс! Кажется, я тебя не понял")
-
-                except sr.RequestError as e:
-                    print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
+            while True: 
+                self.chat()
 
         except KeyboardInterrupt:
             # Сохраняем данные для следующей сессии
@@ -72,6 +47,71 @@ class Speech_AI:
             self._clean_up()
             print("Пока!")
 
+    # Ввод - генерация реплики - ответ
+    @abstractmethod
+    def chat(self):
+        """ Прочитать ввод пользователя - сгенерировать ответ - ответить """
+    
+    # Подготовка
+    @abstractmethod
+    def pre_work(self):
+        """ Какая-то подготовка... """
+
+    # Генерация ответа
+    def make_answer(self, statement):
+        return self.bot.get_response(statement)
+
+
+
+
+# Текстовая версия
+class ChatAI_Text(ChatAI):
+
+    def pre_work(self):
+        """ Nothing do here """
+
+    # Ввод - генерация реплики - ответ
+    def chat(self):
+        print('Вы: ', end='')
+        statement = input()
+        answer = self.make_answer(statement)
+        print("{}: {}".format(self.bot.name, answer))
+
+# Голосовая версия
+class ChatAI_Speech(ChatAI):
+
+    def __init__(self):
+        self._recognizer = sr.Recognizer()
+        self._microphone = sr.Microphone()
+        self._mp3_name = "speech.mp3"
+
+        super(ChatAI_Speech, self).__init__()
+
+    def pre_work(self):
+        print("Минутку тишины, пожалуйста...")
+        with self._microphone as source:
+            self._recognizer.adjust_for_ambient_noise(source)
+
+    # Ввод - генерация реплики - ответ
+    def chat(self):
+
+        audio = self.listenInput()
+
+        try:
+            statement = self._recognizer.recognize_google(audio, language="ru_RU")        
+            answer = self.make_answer(statement)
+            # Союда можно добавить много интересностей (IoT, CV, ...)
+
+            print("Вы: {}".format(statement))
+            print("{}: {}".format(self.bot.name, answer))
+
+            self.say(str(answer))
+
+        except sr.UnknownValueError:
+            print("Упс! Кажется, я тебя не понял")
+
+        except sr.RequestError as e:
+            print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
 
     # Получение входной реплики
     def listenInput(self):
@@ -81,19 +121,6 @@ class Speech_AI:
 
         print("Понял, идет распознавание...")
         return audio
-
-    # Генерация реплики - ответ
-    def chat(self, statement):
-        answer = self.make_answer(statement)
-        # Союда можно добавить много интересностей (IoT, CV, ...)
-
-        print("Вы сказали: {}".format(statement))
-        print("{} сказал: {}".format(self.bot.name, answer))
-        return answer
-
-    # Генерация ответа
-    def make_answer(self, statement):
-        return self.bot.get_response(statement)
 
     #Текст-в-речь и воспроизведение
     def say(self, phrase):
@@ -118,6 +145,9 @@ class Speech_AI:
             os.remove(self._mp3_name)
 
 
+
+
+
 def greeting():
     print('**********************************')
     print('* Welcome to Speech AI chat-bot! *')
@@ -125,20 +155,16 @@ def greeting():
 
 def main():
 
-    print(sys.argv)
-
     # Обработка аргументов командной строки
     if len(sys.argv) == 2 and sys.argv[1] == '-speech':  
         greeting()
-        print('Speech mode')
-        ai = Speech_AI(True)
-        ai.work()
+        print('Speech mode\n\n')
+        ai = ChatAI_Speech()
 
     elif len(sys.argv) == 2 and sys.argv[1] == '-text':
         greeting()
-        print('Text mode')
-        ai = Speech_AI(False)
-        ai.work()
+        print('Text mode\n\n')
+        ai = ChatAI_Text()
 
     else:
         greeting()    
@@ -148,7 +174,7 @@ def main():
         print('  -text   - text chat in console')
         exit()
 
-
+    ai.work()
     
 
 main()
