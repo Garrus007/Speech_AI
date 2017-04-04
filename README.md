@@ -41,18 +41,22 @@ conda install python=3.5
 sudo apt-get install python-pyaudio python3-pyaudio 
 pip3 install pyaudio
 
+# AVBin is required for pyglet
+sudo apt-get install libavbin-dev libavbin0
+
 pip3 install gTTS
 pip3 install SpeechRecognition
 pip3 install chatterbot
-pip3 install pygame
+pip3 install pyglet
 ```
 
-### Windows XP and older
+### Windows
 In windows OS we have several methods to install packages:
-* We can install [compiler](https://wiki.python.org/moin/WindowsCompilers) suggested for our Python version
-* Or we can easily use `Wheel`
-On windows it's bit difficult to install pyaudio and pygame. So, easy way to use `Wheel`. 
-This package versions for Python 3.4.x, but you can download versions what you need
+* We can install [compiler](https://wiki.python.org/moin/WindowsCompilers) suggested for our Python version and then just install
+  packages using pip, just like describted for Debian-based linux. 
+* If you can't use compiller or get some troubles with first way, you can use `Wheel`
+
+#### Installation with Wheel
 
 1. Install Python 3.4.x standalone or in Anaconda
 2. Downaload wheels depending on your architecture (x86 or amd64) and Python version: 
@@ -64,13 +68,18 @@ This package versions for Python 3.4.x, but you can download versions what you n
 pip install --upgrade pip
 pip install wheel
 
-pip install pygame-1.9.3-cp34-cp34m-win32.whl
 pip install PyAudio‑0.2.11‑cp34‑cp34m‑win32.whl
 
-pip3 install gTTS
-pip3 install SpeechRecognition
-pip3 install chatterbot
+pip install gTTS
+pip install SpeechRecognition
+pip install chatterbot
+pip install pyglet
 ```
+
+#### Note for Pyglet
+You should install [AVBin](https://avbin.github.io/AVbin/Download.html) no matter which installation approach you used.
+
+
 ## Run
 ```
 python3 speech_ai.py
